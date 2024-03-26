@@ -2,30 +2,40 @@ package acal_lab04.Lab
 
 import chisel3._
 
-class RCAdder (n:Int) extends Module{
-  val io = IO(new Bundle{
-      val Cin = Input(UInt(1.W))
-      val In1 = Input(UInt(n.W))
-      val In2 = Input(UInt(n.W))
-      val Sum = Output(UInt(n.W))
-      val Cout = Output(UInt(1.W))
+/**
+ * Ripple carry adder
+ */
+class RCAdder(n: Int) extends Module {
+  val io = IO(new Bundle {
+    val cin = Input(UInt(1.W))
+    val in1 = Input(UInt(n.W))
+    val in2 = Input(UInt(n.W))
+    val sum = Output(UInt(n.W))
+    val cout = Output(UInt(1.W))
   })
 
-  //FullAdder ports: A B Cin Sum Cout
-  val FA_Array = Array.fill(n)(Module(new FullAdder()).io)
-  val carry = Wire(Vec(n+1, UInt(1.W)))
-  val sum   = Wire(Vec(n, Bool()))
+  val carries = Wire(Vec(n + 1, UInt(1.W)))
+  val sum = Wire(Vec(n, UInt(1.W)))
 
-  carry(0) := io.Cin
+  carries(0) := io.cin
 
   for (i <- 0 until n) {
-    FA_Array(i).A := io.In1(i)
-    FA_Array(i).B := io.In2(i)
-    FA_Array(i).Cin := carry(i)
-    carry(i+1) := FA_Array(i).Cout
-    sum(i) := FA_Array(i).Sum
+    FullAdder(cin = carries(i),
+              in1 = io.in1(i),
+              in2 = io.in2(i),
+              sum = sum(i),
+              cout = carries(i + 1))
   }
 
-  io.Sum := sum.asUInt
-  io.Cout := carry(n)
+  io.sum := sum.asUInt
+  io.cout := carries(n)
+}
+
+/**
+ * Singleton to make RCAdder
+ */
+object RCAdder {
+  def apply(n: Int) = {
+    Module(new RCAdder(n))
+  }
 }
