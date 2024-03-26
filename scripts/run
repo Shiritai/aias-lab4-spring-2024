@@ -1,0 +1,58 @@
+#!/bin/bash
+
+# lab04/scripts/../src/test/scala
+project_path=$(realpath "$(dirname "$0")")/../
+test_path=$project_path/src/test/scala/
+project_prefix=acal_lab04
+
+# Replace $1 = string, $2 = from, $3 = to
+replace_all() {
+    # Perhap use Python to implement it is the easiest way!
+    python3 -c "print(\"$1\".replace(\"$2\", \"$3\"))"
+}
+
+run_tests() {
+    test_dir=$project_prefix.$1
+    # Use ls to fetch all files in such testing directory
+    tests=$(ls "$test_path""$(replace_all "$test_dir" . /)")
+    # tests=$(find "$test_path""$(replace_all "$test_dir" . /)" -name "*.scala")
+    # run all tests in such directory
+    for t in $tests; do
+        real_t=$(replace_all "$test_dir"."$t" .scala)
+        sbt "Test/runMain $real_t $3"
+    done
+}
+
+test_option="-td ./generated"
+test_with_vcd_option="$test_option -tbn verilator"
+
+case $1 in
+test)
+    run_tests "$2" "$test_option"
+    ;;
+gen_vcd)
+    run_tests "$2" "$test_with_vcd_option"
+    ;;
+clean)
+    case $2 in
+    gen)
+        rm -rf "$project_path"/generated
+        ;;
+    tar)
+        rm -rf "$project_path"/target
+        ;;
+    all)
+        rm -rf "$project_path"/generated
+        rm -rf "$project_path"/target
+        ;;
+    *)
+        # default: clean all
+        rm -rf "$project_path"/generated
+        rm -rf "$project_path"/target
+        ;;
+    esac
+    ;;
+*)
+    echo -e "This is a script that collects useful commands for lab4 :)\nAuthor: Eroiko"
+    ;;
+esac

@@ -88,3 +88,10 @@ project/
 target/
 test_run_dir/
 top_entry/
+
+# Ignore config tools and objects built
+*.class
+*.bin
+*.scala.semanticdb
+.metals
+.bloop
