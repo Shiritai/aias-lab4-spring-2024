@@ -4,17 +4,31 @@ import chisel3._
 import chisel3.util._
 import acal_lab04.Lab._
 
-class Add_Suber extends Module{
-  val io = IO(new Bundle{
-  val in_1 = Input(UInt(4.W))
-	val in_2 = Input(UInt(4.W))
-	val op = Input(Bool()) // 0:ADD 1:SUB
-	val out = Output(UInt(4.W))
-	val o_f = Output(Bool())
+/**
+ * Generalized twos complement add-subtractor
+ */
+class Add_Suber(n: Int = 4) extends Module {
+  val io = IO(new Bundle {
+    val in_1 = Input(UInt(n.W))
+    val in_2 = Input(UInt(n.W))
+    val op = Input(Bool()) // 0: ADD 1: SUB
+    val out = Output(UInt(n.W))
+    val o_f = Output(Bool())
   })
 
-  //please implement your code below
+  val carries = Wire(Vec(n + 1, UInt(1.W)))
+  val sums = Wire(Vec(n, UInt(1.W)))
 
-  io.out := 0.U
-  io.o_f := false.B
+  carries(0) := io.op
+
+  for (i <- 0 until n) {
+    FullAdder(cin = carries(i),
+              in1 = io.in_1(i),
+              in2 = io.in_2(i) ^ io.op,
+              sum = sums(i),
+              cout = carries(i + 1))
+  }
+  
+  io.out := sums.asUInt()
+  io.o_f := carries(n - 1) ^ carries(n)
 }
