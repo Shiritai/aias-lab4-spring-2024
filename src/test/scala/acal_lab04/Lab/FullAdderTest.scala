@@ -25,10 +25,7 @@ class FullAdderTest(fa: FullAdder)
 
 object FullAdderTest extends App {
   Driver.execute(
-    Array("-td",
-          "./generated",
-          "-tbn",
-          "verilator"),
+    args,
     () => new FullAdder()
   ) { c =>
     new FullAdderTest(c)

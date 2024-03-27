@@ -5,6 +5,70 @@ project_path=$(realpath "$(dirname "$0")")/../
 test_path=$project_path/src/test/scala/
 project_prefix=acal_lab04
 
+print_with_color() {
+    color=''
+    case "$1" in
+    black)
+        color="0;30"
+        ;;
+    darkGray)
+        color="1;30"
+        ;;
+    red)
+        color="0;31"
+        ;;
+    lightRed)
+        color="1;31"
+        ;;
+    green)
+        color="0;32"
+        ;;
+    lightGreen)
+        color="1;32"
+        ;;
+    brown/Orang)
+        color="0;33"
+        ;;
+    yellow)
+        color="1;33"
+        ;;
+    blue)
+        color="0;34"
+        ;;
+    lightBlue)
+        color="1;34"
+        ;;
+    purple)
+        color="0;35"
+        ;;
+    lightPurple)
+        color="1;35"
+        ;;
+    cyan)
+        color="0;36"
+        ;;
+    lightCyan)
+        color="1;36"
+        ;;
+    lightGray)
+        color="0;37"
+        ;;
+    white | *)
+        color="1;37"
+        ;;
+    esac
+
+    echo -e "[\e[${color}m$2\e[0m] $3"
+}
+
+print_info() {
+    print_with_color blue INFO "$1"
+}
+
+print_error() {
+    print_with_color red ERROR "$1"
+}
+
 # Replace $1 = string, $2 = from, $3 = to
 replace_all() {
     # Perhap use Python to implement it is the easiest way!
@@ -12,25 +76,33 @@ replace_all() {
 }
 
 run_tests() {
-    test_dir=$project_prefix.$1
+    test_name=$project_prefix.$1
     # Use ls to fetch all files in such testing directory
-    tests=$(ls "$test_path""$(replace_all "$test_dir" . /)")
-    # tests=$(find "$test_path""$(replace_all "$test_dir" . /)" -name "*.scala")
+    # Hidding error when given name is a file or DNE
+    # Wrap with realpath to strip relative path
+    test_path=$(realpath "$test_path""$(replace_all "$test_name" . /)")
+    tests=$(ls "$test_path" 2>/dev/null)
     # run all tests in such directory
-    for t in $tests; do
-        real_t=$(replace_all "$test_dir"."$t" .scala)
-        sbt "Test/runMain $real_t $3"
-    done
+    if [ "$tests" ]; then
+        for t in $tests; do
+            real_t=$(replace_all "$test_name"."$t" .scala)
+            sbt "Test/runMain $real_t $2"
+        done
+    elif [ -f "$test_path".scala ]; then
+        sbt "Test/runMain $test_name $2"
+    else
+        print_error "Path of testbench(s) $test_path DNE"
+    fi
 }
 
 test_option="-td ./generated"
 test_with_vcd_option="$test_option -tbn verilator"
 
 case $1 in
-test)
+check)
     run_tests "$2" "$test_option"
     ;;
-gen_vcd)
+test)
     run_tests "$2" "$test_with_vcd_option"
     ;;
 clean)
@@ -41,18 +113,20 @@ clean)
     tar)
         rm -rf "$project_path"/target
         ;;
-    all)
-        rm -rf "$project_path"/generated
-        rm -rf "$project_path"/target
+    test)
+        rm -rf "$project_path"/test_run_dir
         ;;
-    *)
+    all | *)
         # default: clean all
         rm -rf "$project_path"/generated
         rm -rf "$project_path"/target
         ;;
     esac
     ;;
-*)
+help)
     echo -e "This is a script that collects useful commands for lab4 :)\nAuthor: Eroiko"
+    ;;
+*)
+    echo -e "Command not found :("
     ;;
 esac
